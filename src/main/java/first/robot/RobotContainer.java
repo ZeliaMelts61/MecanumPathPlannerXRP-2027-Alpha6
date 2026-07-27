@@ -171,8 +171,7 @@ public class RobotContainer {
   private void configureAutoBindings(){
     NamedCommands.registerCommand("Grabber up", m_grabber.up());
     NamedCommands.registerCommand("Grabber down", m_grabber.down());
-    m_chooser.setDefaultOption("Auto Routine Distance", new AutonomousDistance(m_drivetrain));
-    m_chooser.addOption("Auto Routine Time", new AutonomousTime(m_drivetrain));
+    m_chooser.setDefaultOption("No Auto", new InstantCommand());
     //m_chooser.addOption("Pathplanner Test Auto", new PathPlannerAuto("New Auto"));
     //m_chooser.addOption("curve", new PathPlannerAuto("curve"));
     SmartDashboard.putData("Auto Chooser", m_chooser);
