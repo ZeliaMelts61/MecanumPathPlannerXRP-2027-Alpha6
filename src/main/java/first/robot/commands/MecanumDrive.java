@@ -60,14 +60,11 @@ public class MecanumDrive extends Command {
     SmartDashboard.putNumber("JoystickXSpeed", xSpeed);
     SmartDashboard.putNumber("JoystickYSpeed", ySpeed);
     SmartDashboard.putNumber("JoystickZSpeed", rotSpeed);
-    //System.out.println(driveRobotRelative);
-    //m_drivetrain.mecanumDriveRobotRelative(xSpeed, ySpeed, rotSpeed);
     if(driveRobotRelative){
       m_drivetrain.mecanumDriveRobotRelative(xSpeed, ySpeed, rotSpeed);
     } else {
       m_drivetrain.mecanumDriveFieldRelative(xSpeed, ySpeed, rotSpeed);
     }
-    //m_drivetrain.mecanumDriveNoPid(xSpeed, ySpeed, rotSpeed);
   }
 
   // Called once the command ends or is interrupted.

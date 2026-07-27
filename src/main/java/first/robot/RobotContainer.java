@@ -38,9 +38,6 @@ public class RobotContainer {
   private final Rangefinder m_rangefinder = new Rangefinder();
 
   private final AddWallToField m_addWallToFieldCommand = new AddWallToField(() -> m_drivetrain.getFieldChassisVelocities(), m_drivetrain.getField(), m_rangefinder);
-  // Assumes a gamepad plugged into channel 0
-  //private final Joystick m_controller = new Joystick(0);
-  //public final SwappableController m_controller = new SwappableController(0, this::configureButtonBindings);
   public final CommandGamepad m_controller = new CommandGamepad(0);
 
   // Create SmartDashboard chooser for autonomous routines
@@ -50,7 +47,6 @@ public class RobotContainer {
   public RobotContainer() {
 
     configureAutoBindings();
-    // Configure the button bindings
     
     m_rsl.setDefaultCommand(m_rsl.getRslCommand());
     m_grabber.setAngle(80); 
@@ -90,14 +86,6 @@ public class RobotContainer {
         .onTrue(m_grabber.vertical());
     m_controller.faceRight() //eg the B button on an xbox controller
     .onTrue(m_grabber.max());
-
-
-    // m_controller.northFace() //eg the Y button on an xbox controller
-    //     .onTrue(new InstantCommand (() -> m_drivetrain.resetAll()).ignoringDisable(true));
-    // m_controller.southFace() //eg the A button on an xbox controller
-    //     .onTrue(m_grabber.vertical());
-    // m_controller.eastFace() //eg the B button on an xbox controller
-    //     .onTrue(m_grabber.max());
 
     m_controller.leftTrigger() 
         .onTrue(m_grabber.toggle());
@@ -172,8 +160,6 @@ public class RobotContainer {
     NamedCommands.registerCommand("Grabber up", m_grabber.up());
     NamedCommands.registerCommand("Grabber down", m_grabber.down());
     m_chooser.setDefaultOption("No Auto", new InstantCommand());
-    //m_chooser.addOption("Pathplanner Test Auto", new PathPlannerAuto("New Auto"));
-    //m_chooser.addOption("curve", new PathPlannerAuto("curve"));
     SmartDashboard.putData("Auto Chooser", m_chooser);
   }
 

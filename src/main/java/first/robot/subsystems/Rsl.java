@@ -55,13 +55,11 @@ public class Rsl extends SubsystemBase {
   public Command getRslCommand(){
     Command rslCommand = new Command() {
       Timer changeState = new Timer();
-      boolean runWhileDisabled = true;
       @Override
       public void initialize() {
         changeState.restart();
         changeState.start();
         turnOn();
-        runWhileDisabled = false;
       }
       @Override
       public void execute() {

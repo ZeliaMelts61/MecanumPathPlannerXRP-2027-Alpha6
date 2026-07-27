@@ -31,8 +31,6 @@ public class Rangefinder extends SubsystemBase {
   }
 
   public Distance getDistanceAsUnit(DistanceUnit unit){
-    //org.wpilib.units.Units.Meters;
-    
     return unit.of(unit.convertFrom(getDistanceMeters(), Meters));
   }
 

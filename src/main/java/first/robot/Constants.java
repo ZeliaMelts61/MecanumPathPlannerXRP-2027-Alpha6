@@ -83,16 +83,17 @@ public final class Constants {
           kRainbow.scrollAtAbsoluteVelocity(MetersPerSecond.of(1), kLedSpacing);
       
       public static final LEDPattern kGradientRainbow = LEDPattern.gradient(GradientType.DISCONTINUOUS, Color.RED, Color.ORANGE, Color.YELLOW, Color.GREEN, Color.BLUE, Color.PURPLE);
-      
-      //0-4 blue #5BCEFA
-      //5-6 pink #F5A9B8
-      //7-8 white #FFFFFF
-      //9-10 pink #F5A9B8
-      //11-18 blue #5BCEFA
-      //19-20 pink #F5A9B8
-      //21-22 white #FFFFFF
-      //23-24 pink #F5A9B8
-      //25-28 blue #5BCEFA
+      /*
+        0-4 blue #5BCEFA
+        5-6 pink #F5A9B8
+        7-8 white #FFFFFF
+        9-10 pink #F5A9B8
+        11-18 blue #5BCEFA
+        19-20 pink #F5A9B8
+        21-22 white #FFFFFF
+        23-24 pink #F5A9B8
+        25-28 blue #5BCEFA
+       */
       public static final Color transBlue = Color.fromString("#5BCEFA");
       public static final Color transPink = Color.fromString("#F5A9B8");
       public static final Color transWhite = Color.fromString("#FFFFFF");
@@ -142,8 +143,6 @@ public final class Constants {
     }
   }
   public static class DrivetrainConstants{
-    //public static final double TRACK_WIDTH_IN_METERS = 0.155; 
-
     // Mecanum wheel locations 
     public static class WheelLocationConstants{
       public static final double kFrontLeftLocationX = 0.0865; //meters
@@ -175,51 +174,26 @@ public final class Constants {
 
     
     public static class PIDConstants {
-      //public static class TranslatePID{
-        public static class FrontLeftPID {
-          public static final double kP = 14.145; 
-          public static final double kI = 0.0;
-          public static final double kD = 0.0; 
-        }
-        public static class FrontRightPID {
-          public static final double kP = 11.703;
-          public static final double kI = 0.0;
-          public static final double kD = 0.0;
-        }
-        public static class BackLeftPID {
-          public static final double kP = 12.401; 
-          public static final double kI = 0.0;
-          public static final double kD = 0.0;
-        }
-        public static class BackRightPID {
-          public static final double kP = 11.899;
-          public static final double kI = 0.0;
-          public static final double kD = 0.0;
-        }
-      //}
-      /* 
-      public static class StrafePID {
-        public static class FrontLeftPID {
-          public static final double kP = 19.085; 
-          public static final double kI = 0.0;
-          public static final double kD = 0.0;
-        }
-        public static class FrontRightPID {
-          public static final double kP = 20.085; 
-          public static final double kI = 0.0;
-          public static final double kD = 0.0;
-        }
-        public static class BackLeftPID {
-          public static final double kP = 23.416; 
-          public static final double kI = 0.0;
-          public static final double kD = 0.0;
-        }
-        public static class BackRightPID {
-          public static final double kP = 16.785; 
-          public static final double kI = 0.0;
-          public static final double kD = 0.0;
-        }
-      }*/
+      public static class FrontLeftPID {
+        public static final double kP = 14.145; 
+        public static final double kI = 0.0;
+        public static final double kD = 0.0; 
+      }
+      public static class FrontRightPID {
+        public static final double kP = 11.703;
+        public static final double kI = 0.0;
+        public static final double kD = 0.0;
+      }
+      public static class BackLeftPID {
+        public static final double kP = 12.401; 
+        public static final double kI = 0.0;
+        public static final double kD = 0.0;
+      }
+      public static class BackRightPID {
+        public static final double kP = 11.899;
+        public static final double kI = 0.0;
+        public static final double kD = 0.0;
+      }
     }
 
     public static class FeedforwardConstants {
@@ -240,10 +214,6 @@ public final class Constants {
       }
     }
 
-    public static final double kMaxLinearXSpeedMPS = .9; //in meters per second
-    public static final double kMaxLinearYSpeedMPS = .8; //in meters per second
-    public static final double kMaxAngularSpeedRPS = 3.0; //in radians per second
-
     public static class LimitSwitchConstants {
       public static final int kFrontLimitSwitchChannel = 15;
       public static final int kLeftLimitSwitchChannel = 13;
@@ -251,9 +221,14 @@ public final class Constants {
       public static final int kBackLimitSwitchChannel = 12;
     }
     
+    public static final double kMaxLinearXSpeedMPS = .9; //in meters per second
+    public static final double kMaxLinearYSpeedMPS = .8; //in meters per second
+    public static final double kMaxAngularSpeedRPS = 3.0; //in radians per second
+
 
   
   }
+  
   public static class PathplannerConstants{
 
     public static RobotConfig config;
