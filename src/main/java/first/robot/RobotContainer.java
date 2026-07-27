@@ -2,14 +2,14 @@
 // Open Source Software; you can modify and/or share it under the terms of
 // the WPILib BSD license file in the root directory of this project.
 
-package frc.robot;
+package first.robot;
 
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
 
-import frc.robot.Constants.LEDConstants;
-import frc.robot.commands.*;
-import frc.robot.subsystems.*;
+import first.robot.Constants.LEDConstants;
+import first.robot.commands.*;
+import first.robot.subsystems.*;
 
 import org.wpilib.smartdashboard.SendableChooser;
 import org.wpilib.smartdashboard.SmartDashboard;
@@ -20,6 +20,7 @@ import org.wpilib.command2.PrintCommand;
 import org.wpilib.command2.button.CommandGamepad;
 import org.wpilib.command2.button.Trigger;
 import org.wpilib.driverstation.GenericHID;
+import org.wpilib.driverstation.XboxController;
 
 /**
  * This class is where the bulk of the robot should be declared. Since Command-based is a
@@ -32,9 +33,11 @@ public class RobotContainer {
   private final Drivetrain m_drivetrain = new Drivetrain();
   private final XRPOnBoardIO m_onboardIO = new XRPOnBoardIO();
   private final Grabber m_grabber = new Grabber();
-  //private final Leds m_leds = new Leds();
+  private final Leds m_leds = new Leds();
   private final Rsl m_rsl = new Rsl(m_onboardIO);
+  private final Rangefinder m_rangefinder = new Rangefinder();
 
+  private final AddWallToField m_addWallToFieldCommand = new AddWallToField(() -> m_drivetrain.getFieldChassisVelocities(), m_drivetrain.getField(), m_rangefinder);
   // Assumes a gamepad plugged into channel 0
   //private final Joystick m_controller = new Joystick(0);
   //public final SwappableController m_controller = new SwappableController(0, this::configureButtonBindings);
@@ -45,10 +48,13 @@ public class RobotContainer {
 
   /** The container for the robot. Contains subsystems, OI devices, and commands. */
   public RobotContainer() {
+
     configureAutoBindings();
     // Configure the button bindings
     
-    m_rsl.setDefaultCommand(new RslCommand(m_rsl));
+    m_rsl.setDefaultCommand(m_rsl.getRslCommand());
+    m_grabber.setAngle(80); 
+
     configureButtonBindings();
   }
 
@@ -61,6 +67,7 @@ public class RobotContainer {
   private void configureButtonBindings() {
 
     m_drivetrain.setDefaultCommand(getMecanumDriveCommand().ignoringDisable(false));
+    m_rangefinder.setDefaultCommand(m_addWallToFieldCommand);
 
     /* 
     if (OperatorConstants.runningSysid){
@@ -68,10 +75,8 @@ public class RobotContainer {
       return;
     }
     */
-    m_controller.leftBumper()
-      .whileTrue(new InstantCommand(() -> m_drivetrain.resetGyro()))
-      .onChange(new InstantCommand(() -> m_drivetrain.resetGyro()));
-    m_grabber.setAngle(80);
+    m_controller.faceLeft()
+      .onChange(m_drivetrain.resetGyroCommand());
   
     Trigger userButton = new Trigger(m_onboardIO::getUserButtonPressed);
     userButton
@@ -79,29 +84,41 @@ public class RobotContainer {
         .onFalse(new PrintCommand("USER Button Released"))
         .onChange(new InstantCommand(() -> SmartDashboard.putBoolean("user button", m_onboardIO.getUserButtonPressed())));
 
-    // m_controller.faceUp() //eg the Y button on an xbox controller
-    //     .onTrue(new InstantCommand (() -> m_drivetrain.resetAll()).ignoringDisable(true));
-    // m_controller.faceDown() //eg the A button on an xbox controller
-    //     .onTrue(m_grabber.vertical());
-    // m_controller.faceRight() //eg the B button on an xbox controller
-    // .onTrue(m_grabber.max());
-
-
-    m_controller.northFace() //eg the Y button on an xbox controller
-        .onTrue(new InstantCommand (() -> m_drivetrain.resetAll()).ignoringDisable(true));
-    m_controller.southFace() //eg the A button on an xbox controller
+    m_controller.faceUp() //eg the Y button on an xbox controller
+        .onTrue(new InstantCommand (() -> m_drivetrain.resetAll()).alongWith(new InstantCommand(()->m_addWallToFieldCommand.removeAll())).ignoringDisable(true));
+    m_controller.faceDown() //eg the A button on an xbox controller
         .onTrue(m_grabber.vertical());
-    m_controller.eastFace() //eg the B button on an xbox controller
-        .onTrue(m_grabber.max());
+    m_controller.faceRight() //eg the B button on an xbox controller
+    .onTrue(m_grabber.max());
+
+
+    // m_controller.northFace() //eg the Y button on an xbox controller
+    //     .onTrue(new InstantCommand (() -> m_drivetrain.resetAll()).ignoringDisable(true));
+    // m_controller.southFace() //eg the A button on an xbox controller
+    //     .onTrue(m_grabber.vertical());
+    // m_controller.eastFace() //eg the B button on an xbox controller
+    //     .onTrue(m_grabber.max());
 
     m_controller.leftTrigger() 
         .onTrue(m_grabber.toggle());
 
-    // m_controller.dpadUp()
-    //   .whileTrue(m_leds.runPattern(LEDConstants.LedPatterns.asBreathing(LEDConstants.LedPatterns.kGradientRainbow)));
-    // m_controller.dpadDown()
-    //   .whileTrue(m_leds.runRainbowScroll());
+    m_controller.dpadUp()
+      .onTrue(m_leds.runPattern(LEDConstants.LedPatterns.asBreathing(LEDConstants.LedPatterns.kGradientRainbow)))
+      .onChange(new InstantCommand(()-> System.out.println("kGradientRainbow")));
+    m_controller.dpadDown()
+      .onTrue(m_leds.runRainbowScroll())
+      .onChange(new InstantCommand(()-> System.out.println("runRainbowScroll")));
+    m_controller.dpadLeft()
+      .onTrue(m_leds.runTransFlag())
+      .onChange(new InstantCommand(()-> System.out.println("Trans Flag")));
+    m_controller.dpadRight()
+      .onTrue(m_leds.getOffCommand());
 
+    m_controller.leftStick() //dosen't actually do anything
+      .onTrue(new InstantCommand(() -> m_leds.off()));
+
+    m_controller.rightStick() //dosen't actually do anything
+      .onTrue(new InstantCommand(() -> m_leds.on()));
     
   }
   
@@ -158,7 +175,7 @@ public class RobotContainer {
     m_chooser.addOption("Auto Routine Time", new AutonomousTime(m_drivetrain));
     //m_chooser.addOption("Pathplanner Test Auto", new PathPlannerAuto("New Auto"));
     //m_chooser.addOption("curve", new PathPlannerAuto("curve"));
-    SmartDashboard.putData(m_chooser);
+    SmartDashboard.putData("Auto Chooser", m_chooser);
   }
 
   /**

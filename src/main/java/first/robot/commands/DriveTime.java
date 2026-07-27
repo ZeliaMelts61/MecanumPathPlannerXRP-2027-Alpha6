@@ -2,27 +2,28 @@
 // Open Source Software; you can modify and/or share it under the terms of
 // the WPILib BSD license file in the root directory of this project.
 
-package frc.robot.commands;
+package first.robot.commands;
 
-import frc.robot.subsystems.Drivetrain;
 import org.wpilib.command2.Command;
 
-public class DriveDistance extends Command {
-  private final Drivetrain m_drive;
-  private final double m_distance;
+import first.robot.subsystems.Drivetrain;
+
+public class DriveTime extends Command {
+  private final double m_duration;
   private final double m_speed;
+  private final Drivetrain m_drive;
+  private long m_startTime;
 
   /**
-   * Creates a new DriveDistance. This command will drive your your robot for a desired distance at
-   * a desired speed.
+   * Creates a new DriveTime. This command will drive your robot for a desired speed and time.
    *
-   * @param speed The speed at which the robot will drive
-   * @param inches The number of inches the robot will drive
+   * @param speed The speed which the robot will drive. Negative is in reverse.
+   * @param time How much time to drive in seconds
    * @param drive The drivetrain subsystem on which this command will run
    */
-  public DriveDistance(double speed, double inches, Drivetrain drive) {
-    m_distance = inches;
+  public DriveTime(double speed, double time, Drivetrain drive) {
     m_speed = speed;
+    m_duration = time * 1000;
     m_drive = drive;
     addRequirements(drive);
   }
@@ -30,8 +31,8 @@ public class DriveDistance extends Command {
   // Called when the command is initially scheduled.
   @Override
   public void initialize() {
+    m_startTime = System.currentTimeMillis();
     m_drive.arcadeDrive(0, 0);
-    m_drive.resetEncoders();
   }
 
   // Called every time the scheduler runs while the command is scheduled.
@@ -49,7 +50,6 @@ public class DriveDistance extends Command {
   // Returns true when the command should end.
   @Override
   public boolean isFinished() {
-    // Compare distance travelled from start to desired distance
-    return Math.abs(m_drive.getAverageDistanceInch()) >= m_distance;
+    return (System.currentTimeMillis() - m_startTime) >= m_duration;
   }
 }

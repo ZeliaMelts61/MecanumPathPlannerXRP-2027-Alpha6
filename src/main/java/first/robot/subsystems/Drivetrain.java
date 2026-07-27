@@ -2,39 +2,29 @@
 // Open Source Software; you can modify and/or share it under the terms of
 // the WPILib BSD license file in the root directory of this project.
 
-package frc.robot.subsystems;
+package first.robot.subsystems;
 
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collectors;
-
 import com.pathplanner.lib.auto.AutoBuilder;
-import com.pathplanner.lib.commands.PathPlannerAuto;
-import com.pathplanner.lib.config.PIDConstants;
 import com.pathplanner.lib.controllers.PPHolonomicDriveController;
-import com.pathplanner.lib.controllers.PPLTVController;
-import com.pathplanner.lib.path.PathPlannerPath;
-import com.pathplanner.lib.trajectory.PathPlannerTrajectory;
-import com.pathplanner.lib.trajectory.PathPlannerTrajectoryState;
 import com.pathplanner.lib.util.PathPlannerLogging;
+
+import first.robot.Constants;
+import first.robot.Constants.DrivetrainConstants;
+import first.robot.Constants.PathplannerConstants;
+import first.robot.Utils.MecanumDriveFeedforward;
+import first.robot.Utils.MecanumDriveFeedforward.MecanumDriveWheelVoltages;
 
 import org.wpilib.math.geometry.Pose2d;
 import org.wpilib.math.geometry.Rotation2d;
 import org.wpilib.math.kinematics.ChassisVelocities;
-import org.wpilib.math.kinematics.DifferentialDriveKinematics;
-import org.wpilib.math.kinematics.DifferentialDriveOdometry;
-import org.wpilib.math.kinematics.DifferentialDriveWheelVelocities;
 import org.wpilib.math.kinematics.MecanumDriveKinematics;
 import org.wpilib.math.kinematics.MecanumDriveOdometry;
 import org.wpilib.math.kinematics.MecanumDriveWheelPositions;
 import org.wpilib.math.kinematics.MecanumDriveWheelVelocities;
-import org.wpilib.math.trajectory.Trajectory;
-import org.wpilib.math.trajectory.ExponentialProfile.State;
 import org.wpilib.math.util.Units;
-import org.wpilib.networktables.NetworkTablesJNI;
-import org.wpilib.units.measure.Time;
+import org.wpilib.simulation.EncoderSim;
+import org.wpilib.simulation.RoboRioSim;
 import org.wpilib.units.measure.Voltage;
 
 import static org.wpilib.units.Units.Meters;
@@ -44,45 +34,23 @@ import static org.wpilib.units.Units.RadiansPerSecond;
 import static org.wpilib.units.Units.Second;
 import static org.wpilib.units.Units.Seconds;
 import static org.wpilib.units.Units.Volts;
-import org.wpilib.util.sendable.Sendable;
 import org.wpilib.util.sendable.SendableRegistry;
-import org.wpilib.hardware.discrete.AnalogInput;
-import org.wpilib.hardware.imu.OnboardIMU;
-import org.wpilib.hardware.discrete.DigitalInput;
-import org.wpilib.driverstation.DriverStation;
+import org.wpilib.hardware.discrete.*;
+import org.wpilib.hardware.hal.simulation.RoboRioDataJNI;
 import org.wpilib.hardware.rotation.Encoder;
-import org.wpilib.system.RobotController;
 import org.wpilib.system.Timer;
-import org.wpilib.drive.DifferentialDrive;
 import org.wpilib.drive.MecanumDrive;
-import org.wpilib.simulation.RoboRioSim;
 import org.wpilib.smartdashboard.Field2d;
-import org.wpilib.smartdashboard.FieldObject2d;
-import org.wpilib.smartdashboard.Mechanism2d;
-import org.wpilib.smartdashboard.MechanismLigament2d;
-import org.wpilib.smartdashboard.MechanismRoot2d;
 import org.wpilib.smartdashboard.SmartDashboard;
 import org.wpilib.sysid.SysIdRoutineLog;
-//import org.wpilib.drive.DifferentialDrive;
-import org.wpilib.xrp.XRPGyro;
-import org.wpilib.xrp.XRPMotor;
-import org.wpilib.xrp.XRPOnBoardIO;
+import org.wpilib.xrp.*;
 import org.wpilib.command2.Command;
+import org.wpilib.command2.InstantCommand;
 import org.wpilib.command2.SubsystemBase;
+import org.wpilib.command2.button.Trigger;
 import org.wpilib.command2.sysid.SysIdRoutine;
-import org.wpilib.math.controller.DifferentialDriveFeedforward;
 import org.wpilib.math.controller.PIDController;
-import org.wpilib.hardware.hal.simulation.RoboRioDataJNI;
-import org.wpilib.math.util.MathUtil;
 import org.wpilib.math.controller.SimpleMotorFeedforward;
-import frc.robot.Constants;
-import frc.robot.RobotContainer;
-import frc.robot.Constants.DrivetrainConstants;
-import frc.robot.Constants.PathplannerConstants;
-import frc.robot.Robot;
-import frc.robot.Utils.MecanumDriveFeedforward;
-import frc.robot.Utils.MecanumDriveFeedforward.MecanumDriveWheelVoltages;
-
 import org.wpilib.driverstation.MatchState;
 import org.wpilib.driverstation.RobotState;
 import org.wpilib.driverstation.internal.DriverStationBackend;
@@ -108,6 +76,9 @@ public class Drivetrain extends SubsystemBase {
   private final Encoder m_frontRightEncoder = new Encoder(6, 7);
   private final Encoder m_backLeftEncoder = new Encoder(8, 9);
   private final Encoder m_backRightEncoder = new Encoder(10, 11);
+
+  private final EncoderSim m_encodersimFL = new EncoderSim(m_frontLeftEncoder);
+
 
   // Set up the differential drive controller
   private final MecanumDrive m_mecanumDrive = new MecanumDrive(
@@ -191,7 +162,6 @@ public class Drivetrain extends SubsystemBase {
     m_kinematics
   );
 
-  private final SimpleMotorFeedforward m_feedforward = new SimpleMotorFeedforward(DrivetrainConstants.kS, DrivetrainConstants.kV);
 
 
   // stuff for displaying path in elastic
@@ -199,34 +169,65 @@ public class Drivetrain extends SubsystemBase {
   private ArrayList<Pose2d> m_pathPoses = new ArrayList<Pose2d>();
   private boolean m_hasRemovedTargetPoseAndPath = false;
 
+  private final AnalogInput m_vinPin = new AnalogInput(3);
 
-  private final AnalogInput m_vinPin = new AnalogInput(5);
 
-  private final AnalogInput an1 = new AnalogInput(0);
-  private final AnalogInput an2 = new AnalogInput(1);
-  private final AnalogInput an3 = new AnalogInput(2);
-  private final AnalogInput an4 = new AnalogInput(3);
-  private final AnalogInput an5 = new AnalogInput(4);
 
-  
-  private final DigitalInput m_digital1 = new DigitalInput(12);
-  private final DigitalInput m_digital2 = new DigitalInput(14);
-  private final DigitalInput m_digital3 = new DigitalInput(15);
-  private final DigitalInput m_digital4 = new DigitalInput(16);
-  private final DigitalInput m_digital5 = new DigitalInput(17);
-  private final DigitalInput m_digital6 = new DigitalInput(18);
-  private final DigitalInput m_digital7 = new DigitalInput(19);
-  private final DigitalInput m_digital8 = new DigitalInput(20);
-  private final DigitalInput m_digital9 = new DigitalInput(21);
-  private final DigitalInput m_digital10 = new DigitalInput(22);
-  private final DigitalInput m_digital11 = new DigitalInput(23);
-  private final DigitalInput m_digital12 = new DigitalInput(24);
-  private final DigitalInput m_digital13 = new DigitalInput(25);
+  // private final DigitalInput m_digital1 = new DigitalInput(1);
+  // private final DigitalInput m_digital2 = new DigitalInput(2);
+  // private final DigitalInput m_digital3 = new DigitalInput(3);
+  // // private final DigitalInput m_digital4 = new DigitalInput(4);
+  // // private final DigitalInput m_digital5 = new DigitalInput(5);
+  // // private final DigitalInput m_digital6 = new DigitalInput(6);
+  // // private final DigitalInput m_digital7 = new DigitalInput(7);
+  // // private final DigitalInput m_digital8 = new DigitalInput(8);
+  // // private final DigitalInput m_digital9 = new DigitalInput(9);
+  // // private final DigitalInput m_digital10 = new DigitalInput(10);
+  // // private final DigitalInput m_digital11 = new DigitalInput(11);
+  // private final DigitalInput m_digital12 = new DigitalInput(12);
+  // private final DigitalInput m_digital13 = new DigitalInput(13);
+  // private final DigitalInput m_digital14 = new DigitalInput(14);
+  // private final DigitalInput m_digital15 = new DigitalInput(15);
+  // private final DigitalInput m_digital16 = new DigitalInput(16);
+  // private final DigitalInput m_digital17 = new DigitalInput(17);
+  // private final DigitalInput m_digital18 = new DigitalInput(18);
+  // private final DigitalInput m_digital19 = new DigitalInput(19);
+  // private final DigitalInput m_digital20 = new DigitalInput(20);
+  // private final DigitalInput m_digital21 = new DigitalInput(21);
+  // private final DigitalInput m_digital22 = new DigitalInput(22);
+  // private final DigitalInput m_digital23 = new DigitalInput(23);
+  // private final DigitalInput m_digital24 = new DigitalInput(24);
 
-  //private final DigitalInput m_digital14 = new DigitalInput(0);
-  //private final DigitalInput m_digital15 = new DigitalInput(1);
-  private final DigitalInput m_digital16 = new DigitalInput(2);
-  private final DigitalInput m_digital17 = new DigitalInput(3);
+  // private final DigitalOutput m_digital16 = new DigitalOutput(16);
+  // private final DigitalOutput m_digital17 = new DigitalOutput(17);
+  // private final DigitalOutput m_digital18 = new DigitalOutput(18);
+
+  // private final DigitalInput[] digitalInputs = new DigitalInput[] {
+  //   m_digital2,
+  //   m_digital3,
+  //   m_digital12,
+  //   m_digital13,
+  //   m_digital14,
+  //   m_digital15,
+  //   m_digital16,
+  //   m_digital17,
+  //   m_digital18,
+  //   m_digital19,
+  //   m_digital20,
+  //   m_digital22,
+  //   m_digital21,
+  //   m_digital23,
+  //   m_digital24,
+  // };
+  private final DigitalInput m_frontLimitSwitchDigitalInput = new DigitalInput(DrivetrainConstants.LimitSwitchConstants.kFrontLimitSwitchChannel);
+  private final DigitalInput m_leftLimitSwitchDigitalInput = new DigitalInput(DrivetrainConstants.LimitSwitchConstants.kLeftLimitSwitchChannel);
+  private final DigitalInput m_rightLimitSwitchDigitalInput = new DigitalInput(DrivetrainConstants.LimitSwitchConstants.kRightLimitSwitchChannel);
+  private final DigitalInput m_backLimitSwitchDigitalInput = new DigitalInput(DrivetrainConstants.LimitSwitchConstants.kBackLimitSwitchChannel);
+
+  private final Trigger m_frontLimitSwitchTrigger = new Trigger(() -> m_frontLimitSwitchDigitalInput.get());
+  private final Trigger m_leftLimitSwitchTrigger = new Trigger(() -> m_leftLimitSwitchDigitalInput.get());
+  private final Trigger m_rightLimitSwitchTrigger = new Trigger(() -> m_rightLimitSwitchDigitalInput.get());
+  private final Trigger m_backLimitSwitchTrigger = new Trigger(() -> m_backLimitSwitchDigitalInput.get());
   
 
   
@@ -269,6 +270,7 @@ public class Drivetrain extends SubsystemBase {
 
     resetEncoders();
     resetPose();
+    resetGyro();
     createDashboardWidgets();
 
     // configure autobuilder for pathplanner
@@ -331,6 +333,10 @@ public class Drivetrain extends SubsystemBase {
   public ChassisVelocities getRobotChassisVelocities(){
     return m_chassisVelocities;
   }
+
+  public void updateRioSim(){
+    RoboRioSim.setVInVoltage(m_vinPin.getVoltage() * 1.55);
+  }
  
 
   public void createDashboardWidgets(){
@@ -359,6 +365,15 @@ public class Drivetrain extends SubsystemBase {
     SmartDashboard.putData("Back Left Pid", m_backLeftPIDController);
     SmartDashboard.putData("Back Right Pid", m_backRightPIDController);
 
+    SmartDashboard.putData("Front Limit Switch", m_frontLimitSwitchDigitalInput);
+    SmartDashboard.putData("Left Limit Switch", m_leftLimitSwitchDigitalInput);
+    SmartDashboard.putData("Right Limit Switch", m_rightLimitSwitchDigitalInput);
+    SmartDashboard.putData("Back Limit Switch", m_backLimitSwitchDigitalInput);
+
+
+    // SmartDashboard.putData("digital 16", m_digital16);
+    // SmartDashboard.putData("digital 17", m_digital17);
+    // SmartDashboard.putData("digital 18", m_digital18);
   }
 
   public void updateDashboardWidgets(){
@@ -371,8 +386,10 @@ public class Drivetrain extends SubsystemBase {
     SmartDashboard.putBoolean("Robot is About to explode", velocity>DrivetrainConstants.kMaxLinearXSpeedMPS);
     //RoboRioSim.getVInVoltage();
     
-    double actualVoltage = m_vinPin.getVoltage() /** 4.03*/;
-    SmartDashboard.putNumber("Voltage?", actualVoltage);
+    double actualVoltage = m_vinPin.getVoltage();
+    SmartDashboard.putNumber("Real Voltage", actualVoltage);
+    SmartDashboard.putNumber("Rio Voltage", RoboRioDataJNI.getVInVoltage());
+
     SmartDashboard.putData("Front Left Encoder",m_frontLeftEncoder);
     SmartDashboard.putData("Front Right Encoder",m_frontRightEncoder);
     SmartDashboard.putData("Back Left Encoder",m_backLeftEncoder);
@@ -380,39 +397,46 @@ public class Drivetrain extends SubsystemBase {
     
     SmartDashboard.putData("Drive", m_mecanumDrive);
 
-    SmartDashboard.putBoolean("DigitalInput1", m_digital1.get());
-    SmartDashboard.putBoolean("DigitalInput2", m_digital2.get());
-    SmartDashboard.putBoolean("DigitalInput3", m_digital3.get());
-    SmartDashboard.putBoolean("DigitalInput4", m_digital4.get());
-    SmartDashboard.putBoolean("DigitalInput5", m_digital5.get());
-    SmartDashboard.putBoolean("DigitalInput6", m_digital6.get());
-    SmartDashboard.putBoolean("DigitalInput7", m_digital7.get());
-    SmartDashboard.putBoolean("DigitalInput8", m_digital8.get());
-    SmartDashboard.putBoolean("DigitalInput9", m_digital9.get());
-    SmartDashboard.putBoolean("DigitalInput10", m_digital10.get());
-    SmartDashboard.putBoolean("DigitalInput11", m_digital11.get());
-    SmartDashboard.putBoolean("DigitalInput12", m_digital12.get());
-    SmartDashboard.putBoolean("DigitalInput13", m_digital13.get());
-    //SmartDashboard.putBoolean("DigitalInput14", m_digital14.get());
-    //SmartDashboard.putBoolean("DigitalInput15", m_digital15.get());
-    SmartDashboard.putBoolean("DigitalInput16", m_digital16.get());
-    SmartDashboard.putBoolean("DigitalInput17", m_digital17.get());
+    SmartDashboard.putBooleanArray("simEncoderBool",new Boolean[]{
+      m_encodersimFL.getDirection(),
+      m_encodersimFL.getInitialized(),
+      m_encodersimFL.getReset(),
+      m_encodersimFL.getReverseDirection()
+    });
 
-    SmartDashboard.putNumber("AnalogInput1", an1.getValue());
-    SmartDashboard.putNumber("AnalogInput2", an2.getValue());
-    SmartDashboard.putNumber("AnalogInput3", an3.getValue());
-    SmartDashboard.putNumber("AnalogInput4", an4.getValue());
-    SmartDashboard.putNumber("AnalogInput5", an5.getValue());
+    SmartDashboard.putNumberArray("simEncoderNum",new Double[]{
+      (double)m_encodersimFL.getDistance(),
+      (double)m_encodersimFL.getDistancePerPulse(),
+      (double)m_encodersimFL.getMaxPeriod(),
+      (double)m_encodersimFL.getPeriod(),
+      (double)m_encodersimFL.getRate(),
+      (double)m_encodersimFL.getCount(),
+      (double)m_encodersimFL.getSamplesToAverage()
+    });
+
+    
+
+    // SmartDashboard.putData("Front Limit Switch Trigger", m_frontLimitSwitchTrigger);
+    // SmartDashboard.putData("Left Limit Switch Trigger", m_leftLimitSwitchTrigger);
+    // SmartDashboard.putData("Right Limit Switch Trigger", m_rightLimitSwitchTrigger);
+    // SmartDashboard.putData("Back Limit Switch Trigger", m_backLimitSwitchTrigger);
+
+    
 
 
-    //ArrayList<Boolean> values = new ArrayList<Boolean>();
-    // digitalInputs.forEach((input) -> {
-    //   values.add(input.isAnalogTrigger());
-    // });
+
+    // for (DigitalInput digitalInput : digitalInputs) {
+    //   SmartDashboard.putBoolean("Digital In " + digitalInput.getChannel(), digitalInput.get());
+    // }
+
+    // m_digital16.set(true);
+    // m_digital17.set(!m_digital17.get());
+    // m_digital18.set(false);
     
 
     //SmartDashboard.putString("digital", Arrays.toString(values.toArray()));
   }
+
 
   /* Updates the Path and TargetPose on the field widget on the dashboard */
   public void updatePathOnDashboard(){
@@ -431,7 +455,6 @@ public class Drivetrain extends SubsystemBase {
     });
   
     PathPlannerLogging.setLogTargetPoseCallback((targetPose) -> {
-      //System.out.println(targetPose);
       m_lastTimeTargetPoseWasUpdated = Timer.getTimestamp();
       m_field.getObject("targetPose").setPose(targetPose);
     });
@@ -461,10 +484,6 @@ public class Drivetrain extends SubsystemBase {
    * @param zAxisRotate Desired rotation Speed for the robot (-1.0 to 1.0).
    */
   public void mecanumDriveRobotRelative(double xAxisSpeed, double yAxisSpeed, double zAxisRotate) {
-    if(allEqualZero(xAxisSpeed, yAxisSpeed, zAxisRotate)){
-      stop();
-      return;
-    }
     ChassisVelocities Velocities = new ChassisVelocities(
       xAxisSpeed * DrivetrainConstants.kMaxLinearXSpeedMPS,
       yAxisSpeed * DrivetrainConstants.kMaxLinearYSpeedMPS,
@@ -481,10 +500,10 @@ public class Drivetrain extends SubsystemBase {
    * @param zAxisRotate Desired rotation Speed for the robot (-1.0 to 1.0).
    */
   public void arcadeDrive(double xAxisSpeed, double zAxisRotate) {
-    if(allEqualZero(xAxisSpeed, zAxisRotate)){
-      stop();
-      return;
-    }
+    // if(allEqualZero(xAxisSpeed, zAxisRotate)){
+    //   stop();
+    //   return;
+    // }
     
     ChassisVelocities Velocities = new ChassisVelocities(
         xAxisSpeed * DrivetrainConstants.kMaxLinearXSpeedMPS,
@@ -500,8 +519,7 @@ public class Drivetrain extends SubsystemBase {
    * @param velocities The ChassisVelocities you want the robot to move at. 
    */
   public void mecanumDriveRobotRelative(ChassisVelocities velocities, boolean fromJoystick) {
-    MecanumDriveWheelVelocities targetVelocities = m_kinematics.toWheelVelocities(velocities);
-    setWheelVelocities(targetVelocities, velocities, fromJoystick);
+    setWheelVelocities(velocities, fromJoystick);
   }
 
   
@@ -521,10 +539,10 @@ public class Drivetrain extends SubsystemBase {
    * @param gyroAngle The rotation 2d of the robot.
    */
   public void mecanumDriveFieldRelative(double xAxisSpeed, double yAxisSpeed, double zAxisRotate, Rotation2d gyroAngle) {
-    if(allEqualZero(xAxisSpeed,yAxisSpeed,zAxisRotate)){
-      stop();
-      return;
-    }
+    // if(allEqualZero(xAxisSpeed,yAxisSpeed,zAxisRotate)){
+    //   stop();
+    //   return;
+    // }
     ChassisVelocities velocities = 
       new ChassisVelocities(
         xAxisSpeed * DrivetrainConstants.kMaxLinearXSpeedMPS,
@@ -571,14 +589,16 @@ public class Drivetrain extends SubsystemBase {
    * 
    * @param targetVelocities Desired wheel velocities for each mecanum wheel.
   */
-  private void setWheelVelocities(MecanumDriveWheelVelocities targetVelocities, ChassisVelocities targetChassisVelocities, boolean fromJoystick) {
-    targetVelocities=targetVelocities.desaturate(DrivetrainConstants.kMaxLinearXSpeedMPS);
+  private void setWheelVelocities(ChassisVelocities targetChassisVelocities, boolean fromJoystick) {
     MecanumDriveWheelVoltages wheelVoltagesFF;
     if(fromJoystick) {
+      targetChassisVelocities = removeMovementsFromLimitSwitches(targetChassisVelocities);
       wheelVoltagesFF = m_mecanumDriveFeedforward.calculateWithoutkA(m_chassisVelocities, targetChassisVelocities, 0.02);
     } else {
       wheelVoltagesFF = m_mecanumDriveFeedforward.calculate(m_chassisVelocities, targetChassisVelocities, 0.02);
     }
+    MecanumDriveWheelVelocities targetVelocities = m_kinematics.toWheelVelocities(targetChassisVelocities);
+    targetVelocities=targetVelocities.desaturate(DrivetrainConstants.kMaxLinearXSpeedMPS);
 
     double frontLeftPIDOut =
         m_frontLeftPIDController.calculate(
@@ -624,6 +644,32 @@ public class Drivetrain extends SubsystemBase {
     m_mecanumDrive.feed(); // oooooh free food............
   }
   
+
+  // private MecanumDriveWheelVelocities removeMovementsFromLimitSwitches(MecanumDriveWheelVelocities targetVelocities) {
+  //   if(m_frontLimitSwitchDigitalInput.get()){
+  //     targetVelocities.
+  //   }
+  // }
+
+  private ChassisVelocities removeMovementsFromLimitSwitches(ChassisVelocities targetChassisVelocities) {
+    if(!(m_frontLimitSwitchDigitalInput.get() && m_backLimitSwitchDigitalInput.get())){
+      if(m_frontLimitSwitchDigitalInput.get() && targetChassisVelocities.vx > 0){
+        targetChassisVelocities.vx = 0;
+      } else if(m_backLimitSwitchDigitalInput.get() && targetChassisVelocities.vx < 0){
+        targetChassisVelocities.vx = 0;
+      }
+    }
+    
+    if(!(m_leftLimitSwitchDigitalInput.get() && m_rightLimitSwitchDigitalInput.get())){
+      if(m_leftLimitSwitchDigitalInput.get() && targetChassisVelocities.vy > 0){
+        targetChassisVelocities.vy = 0;
+      }
+      else if(m_rightLimitSwitchDigitalInput.get() && targetChassisVelocities.vy < 0){
+        targetChassisVelocities.vy = 0;
+      }
+    }
+    return targetChassisVelocities;
+  }
 
   /**
    * Stops the drivetrain by setting all motor powers to 0.
@@ -874,11 +920,32 @@ public class Drivetrain extends SubsystemBase {
     m_gyro.reset();
   }
 
+  public Command resetGyroCommand(){
+    return new InstantCommand(() -> resetGyro()).andThen(new InstantCommand(() -> System.out.println("Gyro reset")));
+  }
+
+  public Trigger getFrontLimitSwitchTrigger(){
+    return m_frontLimitSwitchTrigger;
+  }
+
+  public Trigger getLeftLimitSwitchTrigger(){
+    return m_leftLimitSwitchTrigger;
+  }
+  
+  public Trigger getRightLimitSwitchTrigger(){
+    return m_rightLimitSwitchTrigger;
+  }
+  
+  public Trigger getBackLimitSwitchTrigger(){
+    return m_backLimitSwitchTrigger;
+  }
+
   @Override
   public void periodic() {
     // This method will be called once per scheduler run
     updateKinematics();
     updateOdometry();
+    updateRioSim();
     updatePathOnDashboard();
     updateDashboardWidgets();
   }

@@ -2,7 +2,7 @@
 // Open Source Software; you can modify and/or share it under the terms of
 // the WPILib BSD license file in the root directory of this project.
 
-package frc.robot.commands;
+package first.robot.commands;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -16,9 +16,12 @@ import org.wpilib.math.geometry.Translation2d;
 import org.wpilib.math.kinematics.ChassisVelocities;
 import org.wpilib.smartdashboard.Field2d;
 import org.wpilib.smartdashboard.FieldObject2d;
+
+import first.robot.Constants.RangefinderConstants;
+import first.robot.subsystems.Rangefinder;
+
 import org.wpilib.command2.Command;
-import frc.robot.Constants.RangefinderConstants;
-import frc.robot.subsystems.Rangefinder;
+import org.wpilib.command2.InstantCommand;
 
 /* You should consider using the more terse Command factories API instead https://docs.wpilib.org/en/stable/docs/software/commandbased/organizing-command-based.html#defining-commands */
 public class AddWallToField extends Command {
@@ -26,7 +29,7 @@ public class AddWallToField extends Command {
   private final Rangefinder m_rangefinder;
   private final Field2d m_field;
   private final Supplier<ChassisVelocities> m_fieldChassisSupplier;
-  private final double MERGE_DISTANCE = 0.12;
+  private static final double MERGE_DISTANCE = 0.05;
   private static final double CLUSTER_DISTANCE = 0.35;
 
   private final List<WallCluster> m_wallClusters = new ArrayList<>();
@@ -64,8 +67,6 @@ public class AddWallToField extends Command {
       this.fieldObject = fieldObject;
     }
   }
-
-
 
   /**
    * Creates a new wall mapping command.
@@ -108,6 +109,15 @@ public class AddWallToField extends Command {
     addPointToMap(wallPoint);
 
     updateFieldDisplay();
+  }
+
+  public void removeAll(){
+    for (WallCluster wallCluster : m_wallClusters) {
+      wallCluster.points.clear();
+      wallCluster.fieldObject.setPoses();
+      wallCluster.fieldObject.close();
+    }
+    m_wallClusters.clear();
   }
 
   /**
@@ -241,7 +251,7 @@ public class AddWallToField extends Command {
    * @param firstPoint first point in the wall
    */
   private void createNewCluster(Translation2d firstPoint) {
-    FieldObject2d object = m_field.getObject("Wall " + m_wallClusters.size());
+    FieldObject2d object = m_field.getObject("Wall traj" + m_wallClusters.size());
     WallCluster cluster = new WallCluster(object);
     cluster.points.add(new WallPoint(firstPoint));
     m_wallClusters.add(cluster);
@@ -251,13 +261,14 @@ public class AddWallToField extends Command {
    * Updates all wall objects on the field widget.
    */
   private void updateFieldDisplay() {
-
     for (WallCluster cluster : m_wallClusters) {
-      List<Pose2d> poses = new ArrayList<>();
-      for (WallPoint point : cluster.points) {
-        poses.add(new Pose2d(point.point,new Rotation2d()));
+      if(cluster.points.size() > 4){
+        List<Pose2d> poses = new ArrayList<>();
+        for (WallPoint point : cluster.points) {
+          poses.add(new Pose2d(point.point,new Rotation2d()));
+        }
+        cluster.fieldObject.setPoses(poses);
       }
-      cluster.fieldObject.setPoses(poses);
     }
   }
 

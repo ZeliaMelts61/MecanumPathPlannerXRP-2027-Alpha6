@@ -2,13 +2,15 @@
 // Open Source Software; you can modify and/or share it under the terms of
 // the WPILib BSD license file in the root directory of this project.
 
-package frc.robot;
+package first.robot;
 
 import static org.wpilib.units.Units.Meters;
 import static org.wpilib.units.Units.MetersPerSecond;
 import static org.wpilib.units.Units.Millimeter;
 import static org.wpilib.units.Units.Percent;
 import static org.wpilib.units.Units.Seconds;
+
+import java.util.Map;
 
 import com.pathplanner.lib.config.PIDConstants;
 import com.pathplanner.lib.config.RobotConfig;
@@ -55,14 +57,14 @@ public final class Constants {
   }
   public static class RangefinderConstants {
     public static final double kLocationX = 0; //meters from the center of the robot
-    public static final double kLocationY = 0.3; //meters from the center of the robot
-    public static final double kAngleDegree = 0; //angle in degrees from robot forward
+    public static final double kLocationY = -0.165; //meters from the center of the robot
+    public static final double kAngleDegree = 180; //angle in degrees from robot forward
     public static final double kAngleRadian = org.wpilib.math.util.Units.degreesToRadians(kAngleDegree); //angle in radians from robot forward
 
     public static final Transform2d kRangeFinderOffset = new Transform2d(kLocationX, kLocationY, new Rotation2d(kAngleRadian));
 
     //
-    public static final double kMinDistance = 0.4;
+    public static final double kMinDistance = 0.1;
     public static final double kMaxDistance = 2;
     public static final double kMaxUseableAngularSpeed = 1; //radians a second
   
@@ -70,9 +72,9 @@ public final class Constants {
   }
 
   public static final class LEDConstants {
-    public static final int kNumberOfLeds = 30;
-    private static final int kTrueNumberOfLeds = 150;
-    public static final Distance kLedStripLength = Meters.of(5); //ish
+    public static final int kNumberOfLeds = 28;
+    private static final int kTrueNumberOfLeds = 28;
+    public static final Distance kLedStripLength = Meters.of(.92); //ish
     public static final Distance kLedSpacing = Meters.of(kLedStripLength.magnitude() / kTrueNumberOfLeds);
     
     public static final class LedPatterns {
@@ -82,6 +84,29 @@ public final class Constants {
       
       public static final LEDPattern kGradientRainbow = LEDPattern.gradient(GradientType.DISCONTINUOUS, Color.RED, Color.ORANGE, Color.YELLOW, Color.GREEN, Color.BLUE, Color.PURPLE);
       
+      //0-4 blue #5BCEFA
+      //5-6 pink #F5A9B8
+      //7-8 white #FFFFFF
+      //9-10 pink #F5A9B8
+      //11-18 blue #5BCEFA
+      //19-20 pink #F5A9B8
+      //21-22 white #FFFFFF
+      //23-24 pink #F5A9B8
+      //25-28 blue #5BCEFA
+      public static final Color transBlue = Color.fromString("#5BCEFA");
+      public static final Color transPink = Color.fromString("#F5A9B8");
+      public static final Color transWhite = Color.fromString("#FFFFFF");
+      public static final LEDPattern kTransFlag = LEDPattern.steps(Map.of(
+        (0/28.0), transBlue,
+        (4/28.0), transPink,
+        (6/28.0), transWhite,
+        (8/28.0), transPink,
+        (10/28.0), transBlue,
+        (18/28.0), transPink,
+        (20/28.0), transWhite,
+        (22/28.0), transPink,
+        (24/28.0), transBlue
+      ));
       
       public static final LEDPattern kSolidRed = LEDPattern.solid(Color.RED);
       public static final LEDPattern kSolidOrange = LEDPattern.solid(Color.ORANGE);
@@ -121,17 +146,17 @@ public final class Constants {
 
     // Mecanum wheel locations 
     public static class WheelLocationConstants{
-      public static final double kFrontLeftLocationX = 0.11875; //meters
-      public static final double kFrontLeftLocationY = 0.08; //meters 
+      public static final double kFrontLeftLocationX = 0.0865; //meters
+      public static final double kFrontLeftLocationY = 0.086; //meters 
 
-      public static final double kFrontRightLocationX = 0.11875; //meters
-      public static final double kFrontRightLocationY = -0.08; //meters
+      public static final double kFrontRightLocationX = 0.0865; //meters
+      public static final double kFrontRightLocationY = -0.086; //meters
 
-      public static final double kBackLeftLocationX = -0.11875; //meters
-      public static final double kBackLeftLocationY = 0.08; //meters
+      public static final double kBackLeftLocationX = -0.0865; //meters
+      public static final double kBackLeftLocationY = 0.086; //meters
 
-      public static final double kBackRightLocationX = -0.11875; //meters
-      public static final double kBackRightLocationY = -0.08; //meters
+      public static final double kBackRightLocationX = -0.0865; //meters
+      public static final double kBackRightLocationY = -0.086; //meters
 
       public static final Translation2d kFrontLeftLocation = new Translation2d(kFrontLeftLocationX, kFrontLeftLocationY);
       public static final Translation2d kFrontRightLocation = new Translation2d(kFrontRightLocationX, kFrontRightLocationY);
@@ -148,8 +173,6 @@ public final class Constants {
 
 
 
-    // Wheel Pids (they are put on smart dashboard so they are editable) 
-    //You must restart code for changes to apply
     
     public static class PIDConstants {
       //public static class TranslatePID{
@@ -216,17 +239,18 @@ public final class Constants {
         public static final double kA = 6.122;
       }
     }
-    
-    public static final double kP = 0.2;
-    public static final double kI = 0.0;
-    public static final double kD = 0.0;
-    public static final double kS = 0.1;
-    public static final double kV = 2.2;
 
     public static final double kMaxLinearXSpeedMPS = .9; //in meters per second
     public static final double kMaxLinearYSpeedMPS = .8; //in meters per second
     public static final double kMaxAngularSpeedRPS = 3.0; //in radians per second
 
+    public static class LimitSwitchConstants {
+      public static final int kFrontLimitSwitchChannel = 15;
+      public static final int kLeftLimitSwitchChannel = 13;
+      public static final int kRightLimitSwitchChannel = 14;
+      public static final int kBackLimitSwitchChannel = 12;
+    }
+    
 
   
   }

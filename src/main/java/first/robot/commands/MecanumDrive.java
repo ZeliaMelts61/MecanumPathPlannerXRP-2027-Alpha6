@@ -2,17 +2,18 @@
 // Open Source Software; you can modify and/or share it under the terms of
 // the WPILib BSD license file in the root directory of this project.
 
-package frc.robot.commands;
+package first.robot.commands;
 
-import frc.robot.subsystems.Drivetrain;
 import org.wpilib.math.util.MathUtil;
 import org.wpilib.driverstation.Joystick;
 import org.wpilib.smartdashboard.SmartDashboard;
+
+import first.robot.Constants.OperatorConstants;
+import first.robot.Constants.OperatorConstants.*;
+import first.robot.subsystems.Drivetrain;
+
 import org.wpilib.command2.Command;
 import java.util.function.Supplier;
-
-import frc.robot.Constants.OperatorConstants;
-import frc.robot.Constants.OperatorConstants.*;
 
 public class MecanumDrive extends Command {
   private final Drivetrain m_drivetrain;
@@ -40,7 +41,7 @@ public class MecanumDrive extends Command {
     m_yaxisSpeedSupplier = yaxisSpeedSupplier;
     m_zaxisRotateSupplier = zaxisRotateSupplier;
     m_robotRelativeSupplier = robotRelativeSupplier;
-    SmartDashboard.putNumber("Drive Speed", 1);
+    SmartDashboard.putNumber("Robot Speed", 1);
     addRequirements(drivetrain);
   }
 
@@ -52,14 +53,14 @@ public class MecanumDrive extends Command {
   @Override
 
   public void execute() {
-    double xSpeed = MathUtil.applyDeadband(m_xaxisSpeedSupplier.get(), OperatorConstants.kDeadband)* SmartDashboard.getNumber("Drive Speed", 1);
-    double ySpeed = MathUtil.applyDeadband(m_yaxisSpeedSupplier.get(), OperatorConstants.kDeadband)* SmartDashboard.getNumber("Drive Speed", 1);
-    double rotSpeed = MathUtil.applyDeadband(m_zaxisRotateSupplier.get(), OperatorConstants.kDeadband) * SmartDashboard.getNumber("Drive Speed", 1);
+    double xSpeed = MathUtil.applyDeadband(m_xaxisSpeedSupplier.get(), OperatorConstants.kDeadband)* SmartDashboard.getNumber("Robot Speed", 1);
+    double ySpeed = MathUtil.applyDeadband(m_yaxisSpeedSupplier.get(), OperatorConstants.kDeadband)* SmartDashboard.getNumber("Robot Speed", 1);
+    double rotSpeed = MathUtil.applyDeadband(m_zaxisRotateSupplier.get(), OperatorConstants.kDeadband) * SmartDashboard.getNumber("Robot Speed", 1);
     boolean driveRobotRelative = m_robotRelativeSupplier.get();
     SmartDashboard.putNumber("JoystickXSpeed", xSpeed);
     SmartDashboard.putNumber("JoystickYSpeed", ySpeed);
     SmartDashboard.putNumber("JoystickZSpeed", rotSpeed);
-    //System.out.println(xSpeed);
+    //System.out.println(driveRobotRelative);
     //m_drivetrain.mecanumDriveRobotRelative(xSpeed, ySpeed, rotSpeed);
     if(driveRobotRelative){
       m_drivetrain.mecanumDriveRobotRelative(xSpeed, ySpeed, rotSpeed);

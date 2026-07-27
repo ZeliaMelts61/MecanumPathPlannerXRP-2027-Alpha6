@@ -2,10 +2,11 @@
 // Open Source Software; you can modify and/or share it under the terms of
 // the WPILib BSD license file in the root directory of this project.
 
-package frc.robot.commands;
+package first.robot.commands;
 
-import frc.robot.subsystems.Drivetrain;
 import org.wpilib.command2.Command;
+
+import first.robot.subsystems.Drivetrain;
 
 /*
  * Creates a new TurnTime command. This command will turn your robot for a

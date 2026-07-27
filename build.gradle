@@ -4,9 +4,9 @@ plugins {
     id "com.gradleup.shadow" version "9.3.0"
 }
 
-// wpi.maven.useLocal = false
-// wpi.maven.useWpilibMavenLocalDevelopment = true
-// wpi.versions.wpilibVersion = "2027.424242.+"
+wpi.maven.useLocal = true
+wpi.maven.useWpilibMavenLocalDevelopment = true
+wpi.versions.wpilibVersion = "2027.424242.+"
 
 java {
     sourceCompatibility = JavaVersion.VERSION_25
@@ -44,10 +44,10 @@ test {
 
 // Simulation configuration (e.g. environment variables).
 wpi.sim.addGui().defaultEnabled = true
-wpi.sim.addDriverstation()
+wpi.sim.addDriverstation().defaultEnabled = true
 
 //Sets the XRP Client Host
-wpi.sim.envVar("HALSIMXRP_HOST", "10.209.104.2")
+wpi.sim.envVar("HALSIMXRP_HOST", "10.23.22.2")
 wpi.sim.addXRPClient().defaultEnabled = true
 
 // Setting up my Jar File. In this case, adding all libraries into the main jar ('fat/shaded jar')
