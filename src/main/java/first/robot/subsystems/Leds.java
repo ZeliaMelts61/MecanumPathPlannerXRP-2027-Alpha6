@@ -62,8 +62,6 @@ public class Leds extends SubsystemBase {
         return run(() -> LedPatterns.kTransFlag.applyTo(m_ledData)).ignoringDisable(true);
     }
 
-    
-
     public void off(){
         m_ledPowerControlPin.set(false);
     }
